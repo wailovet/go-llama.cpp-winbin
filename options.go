@@ -15,6 +15,7 @@ type PredictOptions struct {
 	TopP, Temperature, Penalty          float64
 	F16KV                               bool
 	IgnoreEOS                           bool
+	Stream                              func(outputText string) (stop bool)
 }
 
 type PredictOption func(p *PredictOptions)
@@ -86,6 +87,13 @@ var IgnoreEOS PredictOption = func(p *PredictOptions) {
 func SetSeed(seed int) PredictOption {
 	return func(p *PredictOptions) {
 		p.Seed = seed
+	}
+}
+
+// SetStreamFn sets the stream callback for text generation.
+func SetStreamFn(stream func(outputText string) (stop bool)) PredictOption {
+	return func(p *PredictOptions) {
+		p.Stream = stream
 	}
 }
 

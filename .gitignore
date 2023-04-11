@@ -1,0 +1,6 @@
+*.obj
+*.dll
+*.lib
+*.exp
+go.sum
+*.bin
