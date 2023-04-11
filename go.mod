@@ -1,4 +1,4 @@
-module github.com/go-skynet/go-llama.cpp-winbin
+module github.com/wailovet/go-llama.cpp-winbin
 
 go 1.19
 

@@ -4,3 +4,4 @@
 *.exp
 go.sum
 *.bin
+*.exe
