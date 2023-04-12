@@ -14,6 +14,7 @@ var llaMA_load_model *easycgo.EasyCgoProc
 var llaMA_free_model *easycgo.EasyCgoProc
 var llaMA_allocate_params *easycgo.EasyCgoProc
 var llaMA_predict *easycgo.EasyCgoProc
+var llaMA_free_params *easycgo.EasyCgoProc
 var new_chars *easycgo.EasyCgoProc
 
 //go:embed llama.cpp.AVX2.dll
@@ -45,7 +46,7 @@ func LoadDll(dllFile string) {
 	llaMA_free_model = sharedLibrary.MustFind("llama_free_model")
 	llaMA_allocate_params = sharedLibrary.MustFind("llama_allocate_params")
 	llaMA_predict = sharedLibrary.MustFind("llama_predict")
-	new_chars = sharedLibrary.MustFind("new_chars")
+	llaMA_free_params = sharedLibrary.MustFind("llama_free_params")
 }
 
 func LlaMA_load_model(modelPath string, contextSize int, parts int, seed int, f16Memory bool, mLock bool) easycgo.ValueInf {
@@ -73,6 +74,10 @@ func LlaMA_free_model(p easycgo.ValueInf) {
 	llaMA_free_model.Call(p)
 }
 
+func LlaMA_free_params(p easycgo.ValueInf) {
+	llaMA_free_params.Call(p)
+}
+
 func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool) easycgo.ValueInf {
 	ignoreEOSInt := 0
 	if ignoreEOS {
@@ -97,8 +102,4 @@ func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK
 func LlaMA_predict(p easycgo.ValueInf, model easycgo.ValueInf) int {
 	ret := llaMA_predict.Call(p.Value().(uintptr), model.Value().(uintptr))
 	return ret.ToInt()
-}
-
-func newChars(n int) easycgo.ValueInf {
-	return new_chars.Call(n)
 }

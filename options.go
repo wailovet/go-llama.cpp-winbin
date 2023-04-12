@@ -1,6 +1,9 @@
 package llama
 
-import "runtime"
+import (
+	"math"
+	"runtime"
+)
 
 type ModelOptions struct {
 	ContextSize int
@@ -28,15 +31,17 @@ var DefaultModelOptions ModelOptions = ModelOptions{
 	MLock:       false,
 }
 
+var defaultThreadNum = int(math.Min(1, float64(runtime.NumCPU()/2)))
+
 var DefaultOptions PredictOptions = PredictOptions{
 	Seed:        -1,
-	Threads:     runtime.NumCPU(),
+	Threads:     defaultThreadNum,
 	Tokens:      128,
 	TopK:        10000,
-	TopP:        0.90,
-	Temperature: 0.96,
+	TopP:        0.7,
+	Temperature: 0.7,
 	Penalty:     1,
-	Repeat:      64,
+	Repeat:      64 * 4,
 }
 
 // SetContext sets the context size.

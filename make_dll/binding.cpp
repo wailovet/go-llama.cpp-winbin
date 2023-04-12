@@ -226,13 +226,7 @@ void llama_free_params(void *params_ptr)
     gpt_params *params = (gpt_params *)params_ptr;
     delete params;
 }
-
-char *new_chars(int size)
-{
-    char *chars = new char[size];
-    return chars;
-}
-
+ 
 void *llama_allocate_params(const char *prompt, int seed, int threads, int tokens, int top_k,
                             float top_p, float temp, float repeat_penalty, int repeat_last_n, bool ignore_eos, bool memory_f16)
 {
@@ -267,3 +261,5 @@ void *load_model(const char *fname, int n_ctx, int n_parts, int n_seed, bool mem
 
     return llama_init_from_file(fname, lparams);
 }
+
+

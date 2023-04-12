@@ -76,13 +76,11 @@ func (l *LLama) Predict(text string, opts ...PredictOption) (string, error) {
 	}
 
 	params := LlaMA_allocate_params(input, po.Seed, po.Threads, po.Tokens, po.TopK, po.TopP, po.Temperature, po.Penalty, po.Repeat, po.IgnoreEOS, po.F16KV)
-
+	defer LlaMA_free_params(params)
 	ret := LlaMA_predict(params, l.state)
 	if ret != 0 {
 		return "", fmt.Errorf("inference failed")
 	}
-
-	// C.llama_free_params(params)
 
 	return content, nil
 }

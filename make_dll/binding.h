@@ -18,12 +18,9 @@ extern "C"
     DECEXT void llama_free_params(void *params_ptr);
 
     DECEXT void llama_free_model(void *state);
-
-    DECEXT char *new_chars(int size);
-
+ 
     DECEXT int llama_predict(void *params_ptr, void *state_pr);
  
-
 #ifdef __cplusplus
 }
 #endif
