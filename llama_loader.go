@@ -71,11 +71,11 @@ func LlaMA_load_model(modelPath string, contextSize int, parts int, seed int, f1
 }
 
 func LlaMA_free_model(p easycgo.ValueInf) {
-	llaMA_free_model.Call(p)
+	llaMA_free_model.Call(p.Value().(uintptr))
 }
 
 func LlaMA_free_params(p easycgo.ValueInf) {
-	llaMA_free_params.Call(p)
+	llaMA_free_params.Call(p.Value().(uintptr))
 }
 
 func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool) easycgo.ValueInf {
