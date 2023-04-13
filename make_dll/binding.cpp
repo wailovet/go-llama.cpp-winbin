@@ -104,6 +104,8 @@ int llama_predict(void *params_ptr, void *state_pr)
 
     while (n_remain != 0)
     {
+        // printf("llama_predict\n");
+
         // predict
         if (embd.size() > 0)
         {
@@ -211,7 +213,9 @@ int llama_predict(void *params_ptr, void *state_pr)
     }
  
 
+    // printf("CloseHandle\n");
     CloseHandle(hPipe);
+    // printf("CloseHandle ok\n");
     return 0;
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/natefinch/npipe"
 	"github.com/tidwall/gjson"
 	"github.com/wailovet/easycgo"
-	"github.com/wailovet/nuwa"
 )
 
 type LLama struct {
@@ -57,9 +56,10 @@ func (l *LLama) Predict(text string, opts ...PredictOption) (string, error) {
 			msg, err := bufio.NewReader(conn).ReadString('\n')
 			if err != nil {
 				// handle error
-				continue
+				conn.Close()
+				return
 			}
-			nuwa.Helper().WriteFileContent("log.txt", msg+"\r\n")
+			// nuwa.Helper().WriteFileContent("log.txt", msg+"\r\n")
 			content = gjson.Get(msg, "content").String()
 			if po.Stream != nil {
 				if po.Stream(content) {
