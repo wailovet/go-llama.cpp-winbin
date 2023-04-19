@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"runtime"
 	"strings"
 
 	llama "github.com/wailovet/go-llama.cpp-winbin"
@@ -17,13 +17,21 @@ var (
 	tokens  = 128
 )
 
+func jsonEncode(i interface{}) string {
+	jsonBytes, err := json.Marshal(i)
+	if err != nil {
+		return ""
+	}
+	return string(jsonBytes)
+}
+
 func main() {
 	llama.Install()
 	var model string
 
 	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	flags.StringVar(&model, "m", "./ggml-vicuna-13b-4bit-rev1.bin", "path to q4_0.bin model file to load")
-	flags.IntVar(&threads, "t", runtime.NumCPU(), "number of threads to use during computation")
+	flags.StringVar(&model, "m", "./ggml-alpaca-7b-native-q4.bin", "path to q4_0.bin model file to load")
+	flags.IntVar(&threads, "t", 2, "number of threads to use during computation")
 	flags.IntVar(&tokens, "n", 64, "number of tokens to predict")
 
 	err := flags.Parse(os.Args[1:])
@@ -31,11 +39,14 @@ func main() {
 		fmt.Printf("Parsing program arguments failed: %s", err)
 		os.Exit(1)
 	}
-	l, err := llama.New(model, llama.SetContext(32), llama.SetParts(-1))
+	l, err := llama.New(model, llama.EnableEmbedding, llama.SetContext(32), llama.SetParts(-1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
 		os.Exit(1)
 	}
+	embdata := l.Embedding("hey")
+	fmt.Println(jsonEncode(embdata))
+	return
 	fmt.Printf("Model loaded successfully.\n")
 	reader := bufio.NewReader(os.Stdin)
 

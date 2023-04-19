@@ -32,7 +32,7 @@ void sigint_handler(int signo)
 #endif
 
 using namespace json11;
- 
+
 const LPCSTR llama_pipe_name = "\\\\.\\pipe\\llama_pipe";
 
 int llama_predict(void *params_ptr, void *state_pr)
@@ -178,7 +178,7 @@ int llama_predict(void *params_ptr, void *state_pr)
                 std::cout << "写入管道失败" << GetLastError() << std::endl;
                 CloseHandle(hPipe);
                 return 0;
-            } 
+            }
 
             // decrement remaining sampling budget
             --n_remain;
@@ -211,7 +211,6 @@ int llama_predict(void *params_ptr, void *state_pr)
             break;
         }
     }
- 
 
     // printf("CloseHandle\n");
     CloseHandle(hPipe);
@@ -230,7 +229,7 @@ void llama_free_params(void *params_ptr)
     gpt_params *params = (gpt_params *)params_ptr;
     delete params;
 }
- 
+
 void *llama_allocate_params(const char *prompt, int seed, int threads, int tokens, int top_k,
                             float top_p, float temp, float repeat_penalty, int repeat_last_n, bool ignore_eos, bool memory_f16)
 {
@@ -252,7 +251,7 @@ void *llama_allocate_params(const char *prompt, int seed, int threads, int token
     return params;
 }
 
-void *load_model(const char *fname, int n_ctx, int n_parts, int n_seed, bool memory_f16, bool mlock)
+void *load_model(const char *fname, int n_ctx, int n_parts, int n_seed, bool memory_f16, bool mlock, bool embedding)
 {
     // load the model
     auto lparams = llama_context_default_params();
@@ -262,8 +261,45 @@ void *load_model(const char *fname, int n_ctx, int n_parts, int n_seed, bool mem
     lparams.seed = n_seed;
     lparams.f16_kv = memory_f16;
     lparams.use_mlock = mlock;
+    lparams.embedding = embedding;
 
     return llama_init_from_file(fname, lparams);
 }
 
+int llama_get_embedding_size(void *state_ptr)
+{
+    llama_context *ctx = (llama_context *)state_ptr;
+    return llama_n_embd(ctx);
+}
 
+void llama_embedding(void *state_ptr, const char *input, float *output, int n_threads)
+{
+
+    llama_context *ctx = (llama_context *)state_ptr;
+    std::string prompt = input;
+    prompt.insert(0, 1, ' ');
+    // Add a space in front of the first character to match OG llama tokenizer behavior
+    auto embd_inp = ::llama_tokenize(ctx, prompt, true);
+
+    auto llama_token_newline = ::llama_tokenize(ctx, "\n", false);
+
+    if (embd_inp.size() > 0)
+    {
+        if (llama_eval(ctx, embd_inp.data(), embd_inp.size(), 0, n_threads))
+        {
+            fprintf(stderr, "%s : failed to eval\n", __func__);
+            return;
+        }
+    }
+
+    const int n_embd = llama_n_embd(ctx);
+    auto embeddings = llama_get_embeddings(ctx);
+
+    auto size = llama_get_embedding_size(ctx);
+
+    for (int i = 0; i < size; i++)
+    {
+        output[i] = embeddings[i];
+    }
+    return;
+}

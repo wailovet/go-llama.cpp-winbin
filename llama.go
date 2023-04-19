@@ -16,7 +16,7 @@ type LLama struct {
 func New(model string, opts ...ModelOption) (*LLama, error) {
 	mo := NewModelOptions(opts...)
 
-	result := LlaMA_load_model(model, mo.ContextSize, mo.Parts, mo.Seed, mo.F16Memory, mo.MLock)
+	result := LlaMA_load_model(model, mo.ContextSize, mo.Parts, mo.Seed, mo.F16Memory, mo.MLock, mo.Embedding)
 
 	if result == nil {
 		return nil, fmt.Errorf("failed loading model")
@@ -30,6 +30,10 @@ func (l *LLama) Free() {
 }
 
 const pipeName = `\\.\pipe\llama_pipe`
+
+func (l *LLama) Embedding(text string) []float32 {
+	return LlaMA_embedding(l.state, text, 2)
+}
 
 func (l *LLama) Predict(text string, opts ...PredictOption) (string, error) {
 
