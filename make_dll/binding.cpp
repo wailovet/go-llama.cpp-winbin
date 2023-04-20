@@ -259,7 +259,8 @@ void *load_model(const char *fname, int n_ctx, int n_parts, int n_seed, bool mem
     lparams.n_ctx = n_ctx;
     lparams.n_parts = n_parts;
     lparams.seed = n_seed;
-    lparams.f16_kv = memory_f16;
+    // lparams.f16_kv = memory_f16;
+    lparams.f16_kv = true;
     lparams.use_mlock = mlock;
     lparams.embedding = embedding;
 

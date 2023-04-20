@@ -26,27 +26,27 @@ func jsonEncode(i interface{}) string {
 }
 
 func main() {
-	llama.Install()
+	llama.LoadDll("llama.cpp.cuda.dll")
 	var model string
 
 	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flags.StringVar(&model, "m", "./ggml-alpaca-7b-native-q4.bin", "path to q4_0.bin model file to load")
-	flags.IntVar(&threads, "t", 2, "number of threads to use during computation")
-	flags.IntVar(&tokens, "n", 64, "number of tokens to predict")
+	flags.IntVar(&threads, "t", 8, "number of threads to use during computation")
+	flags.IntVar(&tokens, "n", 256, "number of tokens to predict")
 
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Parsing program arguments failed: %s", err)
 		os.Exit(1)
 	}
-	l, err := llama.New(model, llama.EnableEmbedding, llama.SetContext(32), llama.SetParts(-1))
+	l, err := llama.New(model, llama.EnableEmbedding, llama.SetContext(2048), llama.SetParts(-1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
 		os.Exit(1)
 	}
-	embdata := l.Embedding("hey")
-	fmt.Println(jsonEncode(embdata))
-	return
+	// embdata := l.Embedding("heyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyhey")
+	// fmt.Println(jsonEncode(embdata))
+	// return
 	fmt.Printf("Model loaded successfully.\n")
 	reader := bufio.NewReader(os.Stdin)
 

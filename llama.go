@@ -3,6 +3,7 @@ package llama
 import (
 	"bufio"
 	"fmt"
+	"log"
 
 	"github.com/natefinch/npipe"
 	"github.com/tidwall/gjson"
@@ -15,7 +16,7 @@ type LLama struct {
 
 func New(model string, opts ...ModelOption) (*LLama, error) {
 	mo := NewModelOptions(opts...)
-
+	log.Println("mo.Embedding:", mo.Embedding)
 	result := LlaMA_load_model(model, mo.ContextSize, mo.Parts, mo.Seed, mo.F16Memory, mo.MLock, mo.Embedding)
 
 	if result == nil {
@@ -32,6 +33,9 @@ func (l *LLama) Free() {
 const pipeName = `\\.\pipe\llama_pipe`
 
 func (l *LLama) Embedding(text string) []float32 {
+	if l.state == nil {
+		panic("model not loaded")
+	}
 	return LlaMA_embedding(l.state, text, 2)
 }
 

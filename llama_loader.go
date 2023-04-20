@@ -24,6 +24,15 @@ var dllFileAVX2 []byte
 //go:embed llama.cpp.AVX512.dll
 var dllFileAVX512 []byte
 
+//go:embed llama.cpp.cuda.dll
+var dllFileCuda []byte
+
+func InstallCuda() {
+	tmpDir := os.TempDir()
+	os.WriteFile(filepath.Join(tmpDir, "llama.cpp.cuda.dll"), dllFileCuda, 0666)
+	LoadDll(filepath.Join(tmpDir, "llama.cpp.cuda.dll"))
+}
+
 func Install() {
 	tmpDir := os.TempDir()
 	//判断是否支持AVX512
