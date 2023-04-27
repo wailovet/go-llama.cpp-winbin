@@ -95,7 +95,7 @@ func LlaMA_free_params(p easycgo.ValueInf) {
 	llaMA_free_params.Call(p.Value().(uintptr))
 }
 
-func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool) easycgo.ValueInf {
+func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool, batch int) easycgo.ValueInf {
 	ignoreEOSInt := 0
 	if ignoreEOS {
 		ignoreEOSInt = 1
@@ -106,7 +106,7 @@ func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK
 		f16KVInt = 1
 	}
 
-	ret := llaMA_allocate_params.Call(input, seed, threads, tokens, topK, topP, temperature, penalty, repeat, ignoreEOSInt, f16KVInt)
+	ret := llaMA_allocate_params.Call(input, seed, threads, tokens, topK, topP, temperature, penalty, repeat, ignoreEOSInt, f16KVInt, batch)
 
 	ptr, ok := ret.Value().(uintptr)
 	if !ok || ptr == 0 {

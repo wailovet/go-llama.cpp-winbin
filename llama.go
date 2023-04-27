@@ -83,7 +83,7 @@ func (l *LLama) Predict(text string, opts ...PredictOption) (string, error) {
 		po.Tokens = 99999999
 	}
 
-	params := LlaMA_allocate_params(input, po.Seed, po.Threads, po.Tokens, po.TopK, po.TopP, po.Temperature, po.Penalty, po.Repeat, po.IgnoreEOS, po.F16KV)
+	params := LlaMA_allocate_params(input, po.Seed, po.Threads, po.Tokens, po.TopK, po.TopP, po.Temperature, po.Penalty, po.Repeat, po.IgnoreEOS, po.F16KV, po.BatchSize)
 	defer LlaMA_free_params(params)
 	ret := LlaMA_predict(params, l.state)
 	if ret != 0 {

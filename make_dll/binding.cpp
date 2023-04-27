@@ -102,36 +102,6 @@ int llama_predict(void *params_ptr, void *state_pr)
     std::vector<llama_token> embd;
     std::string res = "";
 
-    // while (n_remain != 0)
-    // {
-    //     // printf("llama_predict\n");
-
-    //     // predict
-    //     if (embd.size() > 0)
-    //     {
-    //         // infinite text generation via context swapping
-    //         // if we run out of context:
-    //         // - take the n_keep first tokens from the original prompt (via n_past)
-    //         // - take half of the last (n_ctx - n_keep) tokens and recompute the logits in a batch
-    //         if (n_past + (int)embd.size() > n_ctx)
-    //         {
-    //             const int n_left = n_past - params.n_keep;
-
-    //             n_past = params.n_keep;
-
-    //             // insert n_left/2 tokens at the start of embd from last_n_tokens
-    //             embd.insert(embd.begin(), last_n_tokens.begin() + n_ctx - n_left / 2 - embd.size(), last_n_tokens.end() - embd.size());
-    //         }
-
-    //         if (llama_eval(ctx, embd.data(), embd.size(), n_past, params.n_threads))
-    //         {
-    //             fprintf(stderr, "%s : failed to eval\n", __func__);
-    //             CloseHandle(hPipe);
-    //             return 1;
-    //         }
-    //     }
-
-    //     n_past += embd.size();
 
     while (n_remain != 0 || params.interactive)
     {
@@ -150,14 +120,6 @@ int llama_predict(void *params_ptr, void *state_pr)
 
                 // insert n_left/2 tokens at the start of embd from last_n_tokens
                 embd.insert(embd.begin(), last_n_tokens.begin() + n_ctx - n_left / 2 - embd.size(), last_n_tokens.end() - embd.size());
-
-                // printf("\n---\n");
-                // printf("resetting: '");
-                // for (int i = 0; i < (int) embd.size(); i++) {
-                //     printf("%s", llama_token_to_str(ctx, embd[i]));
-                // }
-                // printf("'\n");
-                // printf("\n---\n");
             }
 
             // evaluate tokens in batches
@@ -278,7 +240,7 @@ void llama_free_params(void *params_ptr)
 }
 
 void *llama_allocate_params(const char *prompt, int seed, int threads, int tokens, int top_k,
-                            float top_p, float temp, float repeat_penalty, int repeat_last_n, bool ignore_eos, bool memory_f16)
+                            float top_p, float temp, float repeat_penalty, int repeat_last_n, bool ignore_eos, bool memory_f16, int batch)
 {
     gpt_params *params = new gpt_params;
     params->seed = seed;
@@ -293,6 +255,7 @@ void *llama_allocate_params(const char *prompt, int seed, int threads, int token
     params->repeat_penalty = repeat_penalty;
 
     params->prompt = prompt;
+    params->n_batch = batch;
     params->ignore_eos = ignore_eos;
 
     return params;

@@ -18,6 +18,7 @@ type PredictOptions struct {
 	Seed, Threads, Tokens, TopK, Repeat int
 	TopP, Temperature, Penalty          float64
 	F16KV                               bool
+	BatchSize                           int
 	IgnoreEOS                           bool
 	Stream                              func(outputText string) (stop bool)
 }
@@ -112,6 +113,12 @@ func SetStreamFn(stream func(outputText string) (stop bool)) PredictOption {
 func SetThreads(threads int) PredictOption {
 	return func(p *PredictOptions) {
 		p.Threads = threads
+	}
+}
+
+func SetBatchSize(batchSize int) PredictOption {
+	return func(p *PredictOptions) {
+		p.BatchSize = batchSize
 	}
 }
 
