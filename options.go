@@ -11,7 +11,7 @@ type ModelOptions struct {
 	Seed        int
 	F16Memory   bool
 	MLock       bool
-	Embedding   bool
+	NGPULayers  int
 }
 
 type PredictOptions struct {
@@ -31,7 +31,7 @@ var DefaultModelOptions ModelOptions = ModelOptions{
 	Seed:        0,
 	F16Memory:   false,
 	MLock:       false,
-	Embedding:   false,
+	NGPULayers:  0,
 }
 
 var defaultThreadNum = int(math.Min(1, float64(runtime.NumCPU()/2)))
@@ -66,6 +66,12 @@ func SetParts(c int) ModelOption {
 	}
 }
 
+func SetNGPULayers(c int) ModelOption {
+	return func(p *ModelOptions) {
+		p.NGPULayers = c
+	}
+}
+
 var EnableF16Memory ModelOption = func(p *ModelOptions) {
 	p.F16Memory = true
 }
@@ -76,10 +82,6 @@ var EnableF16KV PredictOption = func(p *PredictOptions) {
 
 var EnableMLock ModelOption = func(p *ModelOptions) {
 	p.MLock = true
-}
-
-var EnableEmbedding ModelOption = func(p *ModelOptions) {
-	p.Embedding = true
 }
 
 // Create a new PredictOptions object with the given options.

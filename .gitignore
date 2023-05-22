@@ -6,4 +6,5 @@ go.sum
 *.bin
 *.exe
 debug
-log.txt
+log.txt 
+.vscode/settings.json

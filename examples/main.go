@@ -26,7 +26,7 @@ func jsonEncode(i interface{}) string {
 }
 
 func main() {
-	llama.LoadDll("llama.cpp.cuda.dll")
+	llama.LoadDll("llama.cpp.cuda.v2.dll", "3")
 	var model string
 
 	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
@@ -39,23 +39,20 @@ func main() {
 		fmt.Printf("Parsing program arguments failed: %s", err)
 		os.Exit(1)
 	}
-	l, err := llama.New(model, llama.EnableEmbedding, llama.SetContext(2048), llama.SetParts(-1))
+	l, err := llama.New(model, llama.SetContext(2048), llama.SetParts(-1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
 		os.Exit(1)
 	}
-	// embdata := l.Embedding("heyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyheyhey")
-	// fmt.Println(jsonEncode(embdata))
-	// return
 	fmt.Printf("Model loaded successfully.\n")
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		text := readMultiLineInput(reader)
 		fmt.Print("### Assistant:")
-		sendText := fmt.Sprintf("你是一个AI助手,你需要回答用户的问题\n\n### Human: %s\n### Assistant: ", text)
+		sendText := fmt.Sprintf("你是一个乐于助人的人工智能助手. \n\n### Human: %s\n### Assistant: ", text)
 
-		data, err := l.Predict(sendText, llama.SetTokens(tokens), llama.SetThreads(threads), llama.SetTopK(90), llama.SetTopP(0.86), llama.SetStreamFn(func(s string) (stop bool) {
+		data, err := l.Predict(sendText, llama.SetBatchSize(256), llama.SetTokens(tokens), llama.SetThreads(threads), llama.SetTemperature(0.8), llama.SetTopK(90), llama.SetTopP(0.86), llama.SetStreamFn(func(s string) (stop bool) {
 			if strings.HasSuffix(s, "##") {
 				return true
 			}

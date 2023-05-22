@@ -10,58 +10,62 @@ import (
 )
 
 var sharedLibrary *easycgo.EasyCgo
-var llaMA_load_model *easycgo.EasyCgoProc
-var llaMA_free_model *easycgo.EasyCgoProc
-var llaMA_allocate_params *easycgo.EasyCgoProc
-var llaMA_predict *easycgo.EasyCgoProc
-var llaMA_free_params *easycgo.EasyCgoProc
-var llaMA_embedding *easycgo.EasyCgoProc
-var llaMA_get_embedding_size *easycgo.EasyCgoProc
+
+var llaMA_load_model = map[string]*easycgo.EasyCgoProc{}
+
+var llaMA_free_model = map[string]*easycgo.EasyCgoProc{}
+
+var llaMA_allocate_params = map[string]*easycgo.EasyCgoProc{}
+
+var llaMA_predict = map[string]*easycgo.EasyCgoProc{}
+
+var llaMA_free_params = map[string]*easycgo.EasyCgoProc{}
 
 //go:embed llama.cpp.AVX2.dll
 var dllFileAVX2 []byte
 
-//go:embed llama.cpp.AVX512.dll
-var dllFileAVX512 []byte
+//go:embed llama.cpp.AVX2.v3.dll
+var dllFileAVX2V3 []byte
 
 //go:embed llama.cpp.cuda.dll
 var dllFileCuda []byte
 
+//go:embed llama.cpp.cuda.v3.dll
+var dllFileCudaV3 []byte
+
 func InstallCuda() {
 	tmpDir := os.TempDir()
 	os.WriteFile(filepath.Join(tmpDir, "llama.cpp.cuda.dll"), dllFileCuda, 0666)
-	LoadDll(filepath.Join(tmpDir, "llama.cpp.cuda.dll"))
+	LoadDll(filepath.Join(tmpDir, "llama.cpp.cuda.dll"), "1")
+
+	os.WriteFile(filepath.Join(tmpDir, "llama.cpp.cuda.v3.dll"), dllFileCudaV3, 0666)
+	LoadDll(filepath.Join(tmpDir, "llama.cpp.cuda.v3.dll"), "3")
 }
 
 func Install() {
 	tmpDir := os.TempDir()
-	//判断是否支持AVX512
-	if isSupportAVX512() {
-		os.WriteFile(filepath.Join(tmpDir, "llama.cpp.AVX512.dll"), dllFileAVX512, 0666)
-		LoadDll(filepath.Join(tmpDir, "llama.cpp.AVX512.dll"))
-		return
-	}
 
 	os.WriteFile(filepath.Join(tmpDir, "llama.cpp.AVX2.dll"), dllFileAVX2, 0666)
-	LoadDll(filepath.Join(tmpDir, "llama.cpp.AVX2.dll"))
+	LoadDll(filepath.Join(tmpDir, "llama.cpp.AVX2.dll"), "1")
+
+	os.WriteFile(filepath.Join(tmpDir, "llama.cpp.AVX2.v3.dll"), dllFileAVX2V3, 0666)
+	LoadDll(filepath.Join(tmpDir, "llama.cpp.AVX2.v3.dll"), "3")
 }
 
 func isSupportAVX512() bool {
 	return cpu.X86.HasAVX512
 }
 
-func LoadDll(dllFile string) {
+func LoadDll(dllFile string, version string) {
 	sharedLibrary = easycgo.MustLoad(dllFile)
-	llaMA_load_model = sharedLibrary.MustFind("load_model")
-	llaMA_free_model = sharedLibrary.MustFind("llama_free_model")
-	llaMA_allocate_params = sharedLibrary.MustFind("llama_allocate_params")
-	llaMA_predict = sharedLibrary.MustFind("llama_predict")
-	llaMA_free_params = sharedLibrary.MustFind("llama_free_params")
-	llaMA_embedding = sharedLibrary.MustFind("llama_embedding")
-	llaMA_get_embedding_size = sharedLibrary.MustFind("llama_get_embedding_size")
+	llaMA_load_model[version] = sharedLibrary.MustFind("load_model")
+	llaMA_free_model[version] = sharedLibrary.MustFind("llama_free_model")
+	llaMA_allocate_params[version] = sharedLibrary.MustFind("llama_allocate_params")
+	llaMA_predict[version] = sharedLibrary.MustFind("llama_predict")
+	llaMA_free_params[version] = sharedLibrary.MustFind("llama_free_params")
 }
 
-func LlaMA_load_model(modelPath string, contextSize int, parts int, seed int, f16Memory bool, mLock bool, embedding bool) easycgo.ValueInf {
+func LlaMA_load_model(version string, modelPath string, contextSize int, parts int, seed int, f16Memory bool, mLock bool, nGPULayers int) easycgo.ValueInf {
 	f16MemoryInt := 0
 	if f16Memory {
 		f16MemoryInt = 1
@@ -72,63 +76,36 @@ func LlaMA_load_model(modelPath string, contextSize int, parts int, seed int, f1
 		mLockInt = 1
 	}
 
-	embeddingInt := 0
-	if embedding {
-		embeddingInt = 1
-	}
+	ret := llaMA_load_model[version].Call(modelPath, contextSize, parts, seed, f16MemoryInt, mLockInt, nGPULayers)
 
-	ret := llaMA_load_model.Call(modelPath, contextSize, parts, seed, f16MemoryInt, mLockInt, embeddingInt)
-
-	ptr, ok := ret.Value().(uintptr)
-	if !ok || ptr == 0 {
+	if ret.IsNil() {
 		return nil
 	}
 
 	return ret
 }
 
-func LlaMA_free_model(p easycgo.ValueInf) {
-	llaMA_free_model.Call(p.Value().(uintptr))
+func LlaMA_free_model(version string, p easycgo.ValueInf) {
+	llaMA_free_model[version].Call(p.Value().(uintptr))
 }
 
-func LlaMA_free_params(p easycgo.ValueInf) {
-	llaMA_free_params.Call(p.Value().(uintptr))
+func LlaMA_free_params(version string, p easycgo.ValueInf) {
+	llaMA_free_params[version].Call(p.Value().(uintptr))
 }
 
-func LlaMA_allocate_params(input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool, batch int) easycgo.ValueInf {
-	ignoreEOSInt := 0
-	if ignoreEOS {
-		ignoreEOSInt = 1
-	}
+func LlaMA_allocate_params(version string, input string, seed int, threads int, tokens int, topK int, topP float64, temperature float64, penalty float64, repeat int, ignoreEOS bool, f16KV bool, batch int) easycgo.ValueInf {
 
-	f16KVInt := 0
-	if f16KV {
-		f16KVInt = 1
-	}
+	ret := llaMA_allocate_params[version].Call(input, seed, threads, tokens, topK,
+		float32(topP), float32(temperature), float32(penalty), repeat, ignoreEOS, f16KV, batch)
 
-	ret := llaMA_allocate_params.Call(input, seed, threads, tokens, topK, topP, temperature, penalty, repeat, ignoreEOSInt, f16KVInt, batch)
-
-	ptr, ok := ret.Value().(uintptr)
-	if !ok || ptr == 0 {
+	if ret.IsNil() {
 		return nil
 	}
 
 	return ret
 }
 
-func LlaMA_predict(p easycgo.ValueInf, model easycgo.ValueInf) int {
-	ret := llaMA_predict.Call(p.Value().(uintptr), model.Value().(uintptr))
-	return ret.ToInt()
-}
-
-func LlaMA_embedding(model easycgo.ValueInf, text string, n_thread int) []float32 {
-	embeddingSize := LlaMA_get_embedding_size(model)
-	embedding := make([]float32, embeddingSize)
-	llaMA_embedding.Call(model, text, embedding, n_thread)
-	return embedding
-}
-
-func LlaMA_get_embedding_size(model easycgo.ValueInf) int {
-	ret := llaMA_get_embedding_size.Call(model)
+func LlaMA_predict(version string, p easycgo.ValueInf, model easycgo.ValueInf) int {
+	ret := llaMA_predict[version].Call(p, model)
 	return ret.ToInt()
 }
